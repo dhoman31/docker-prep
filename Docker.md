@@ -315,3 +315,74 @@ services:
 similar to `docker ps`
 
 Need to run this from the directory where the docker-compose.yml file is. 
+
+# Development Workflow
+Development -> Testing -> Deployment
+
+Do everything through GitHub.
+
+Write tests through TravisCI to make sure things are working correctly. Assuming TravisCI pulls the data perfectly, TravisCI will run the tests and if all works well, it will push everything to AWS. 
+
+Recommend having two Dockerfiles -> 1 for development (`start`), 1 for production(`build`).
+
+## NPM Stuff
+`npm run start` -> starts up a development server - this is for development only, not prod, etc.
+
+`npm run test` -> Runs tests assoaciated with a project
+
+`npm run build` -> builds a production version of the application
+
+## Development Dockerfile 
+Has the name `Dockerfile.dev`. Production one is simply `Dockerfile`.
+
+Dir:` /Users/daniel.homan/Desktop/Docker/node-app`
+
+To build the dev file, we do: 
+
+`docker build -f Dockerfile.dev .`
+
+`-f` allows us to use a file for the build, so simply pass the file name. 
+
+Dependancies can be duplicated when running the build command so just remove the node modules folder and run the build command again - this will build the file very quickly and there will be no duplicates. 
+
+## Starting the Container
+`docker run <container_id>`. Always be sure when something is exposed over a port to add the port or `-p` tag. 
+
+# Docker Volumes
+Volumes allow you to mount files which can be accessed by the container. Good way to prevent stopping containers and rebuilding when making tweaks to applications or UI tools. 
+
+Can think of it as a mapping of a file inside a container to a file outside of the container. It's essentially a reference point. 
+
+The command to do so would look similar to the following: 
+
+`docker run -p 3000:3000 -v /app/node_modules -v $(pwd):/app <image_id>`
+
+The second `-v` gets the current working directly and maps it to `/app` running in the container. 
+
+The first `-v` puts a bookmark on the folder. 
+
+## Bookmarking Volumes
+
+
+# Shorthand Docker-Compose
+Docker compose is used to help shorten queries. 
+
+Add a volumes section into the docker compose yml. 
+
+Everything is in the `frontend` folder. 
+
+# Running Tests
+When it comes down to running tests, we can use `npm run test` to do so for the app that is present but what happens if we have the container running and we want to add a new test to which the container was started with `docker build -f Dockerfile.dev`? If this is the case, then nothing would happen because there are no volumes present. So we have 2 options, we can keep the container running and start up a docker-compose command which will have volumes established and we exec into the container, we go into the files and update accordingly (not the best way of doing this), or we set up different services in the `docker-compose.yml`. 
+
+One service for the app, another for the tests. This is also not the perfect solution. 
+
+# Docker Compose for Running Tests
+Just build an additional service for the mapping and load everything into it. Just exec into one and make changes as needs be. 
+
+# Multi-step builds
+
+Can have 2 base images instead of just one. Lets say I want to use node because of my dependancies for an app but I also want to use Nginx, it would mean I basically need an image that can handle both node and also nginx but what we can do is introduce 2 phases: Build and Run phase. 
+
+Build will use the node:alpine image, copy the files, install dependancies and start a production service. 
+
+Run will be used to start using nginx (during this phase we can specify the use of another base image), we copy the result of the npm run build command and then start nginx. 
