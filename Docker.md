@@ -45,6 +45,9 @@ to see all.
 To remove all 
 `docker system prune`
 
+Can remove individual containers with:
+`docker rm <name>`
+
 This will mean you will have to redownload images from Docker hub to get everything again. Can free up a lot of disk space. 
 
 # Retrieving Log Outputs
